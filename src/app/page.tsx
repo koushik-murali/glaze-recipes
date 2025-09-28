@@ -2,23 +2,28 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Palette, Settings } from 'lucide-react';
+import { Plus, Palette, Settings, LogIn, User } from 'lucide-react';
 import { GlazeRecipe } from '@/types/glaze';
 import { getGlazeRecipes, deleteGlazeRecipe } from '@/lib/glaze-utils';
 import { getSettings, isFirstLaunch } from '@/lib/settings-utils';
 import CreateGlazeDialog from '@/components/CreateGlazeDialog';
 import GlazeGallery from '@/components/GlazeGallery';
 import ViewGlazeDialog from '@/components/ViewGlazeDialog';
+import AuthDialog from '@/components/AuthDialog';
+import UserProfile from '@/components/UserProfile';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [glazes, setGlazes] = useState<GlazeRecipe[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingGlaze, setEditingGlaze] = useState<GlazeRecipe | null>(null);
   const [viewingGlaze, setViewingGlaze] = useState<GlazeRecipe | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [studioName, setStudioName] = useState('My Studio');
   const [showFirstTimeBanner, setShowFirstTimeBanner] = useState(false);
 
@@ -97,12 +102,27 @@ export default function Home() {
             <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200">
               Welcome to {studioName}
             </h2>
-            <Link href="/settings">
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                Dashboard
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              {user ? (
+                <UserProfile onSettingsClick={() => router.push('/settings')} />
+              ) : (
+                <Button 
+                  onClick={() => setIsAuthDialogOpen(true)}
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Sign In
+                </Button>
+              )}
+              <Link href="/settings">
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -176,6 +196,12 @@ export default function Home() {
           onOpenChange={handleViewDialogClose}
           glaze={viewingGlaze}
           onEdit={handleEditFromView}
+        />
+
+        {/* Auth Dialog */}
+        <AuthDialog
+          open={isAuthDialogOpen}
+          onOpenChange={setIsAuthDialogOpen}
         />
       </div>
     </div>
