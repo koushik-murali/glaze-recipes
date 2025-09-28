@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Palette, Settings, User } from 'lucide-react';
 import { GlazeRecipe } from '@/types/glaze';
-import { getGlazeRecipes, deleteGlazeRecipe } from '@/lib/glaze-utils';
+import { getGlazeRecipes, deleteGlazeRecipe } from '@/lib/supabase-utils';
 import { getSettings, isFirstLaunch } from '@/lib/settings-utils';
 import CreateGlazeDialog from '@/components/CreateGlazeDialog';
 import GlazeGallery from '@/components/GlazeGallery';
@@ -26,11 +26,22 @@ export default function Home() {
   const [showFirstTimeBanner, setShowFirstTimeBanner] = useState(false);
 
   useEffect(() => {
-    setGlazes(getGlazeRecipes());
-    const settings = getSettings();
-    setStudioName(settings.studioName || 'My Studio');
-    setShowFirstTimeBanner(isFirstLaunch());
-  }, []);
+    const loadData = async () => {
+      if (user) {
+        try {
+          const glazesData = await getGlazeRecipes(user.id);
+          setGlazes(glazesData);
+        } catch (error) {
+          console.error('Error loading glazes:', error);
+        }
+      }
+      const settings = getSettings();
+      setStudioName(settings.studioName || 'My Studio');
+      setShowFirstTimeBanner(isFirstLaunch());
+    };
+    
+    loadData();
+  }, [user]);
 
   const handleGlazeCreated = (newGlaze: GlazeRecipe) => {
     setGlazes(prev => [...prev, newGlaze]);
@@ -48,10 +59,14 @@ export default function Home() {
     setIsCreateDialogOpen(true);
   };
 
-  const handleDeleteGlaze = (glazeId: string) => {
-    if (confirm('Are you sure you want to delete this glaze recipe?')) {
-      deleteGlazeRecipe(glazeId);
-      setGlazes(prev => prev.filter(glaze => glaze.id !== glazeId));
+  const handleDeleteGlaze = async (glazeId: string) => {
+    if (confirm('Are you sure you want to delete this glaze recipe?') && user) {
+      try {
+        await deleteGlazeRecipe(glazeId, user.id);
+        setGlazes(prev => prev.filter(glaze => glaze.id !== glazeId));
+      } catch (error) {
+        console.error('Error deleting glaze:', error);
+      }
     }
   };
 
@@ -85,21 +100,15 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 safe-area-inset">
       <div className="container mx-auto px-4 py-4 sm:py-8 mobile-scroll">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Palette className="h-8 w-8 text-blue-600" />
-            <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100">
-              Glaze Recipes
-            </h1>
-          </div>
-          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-4">
-            Capture, organize, and manage your ceramic glaze recipes digitally. 
-            Perfect for potters and ceramic artists.
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200">
-              Welcome to {studioName}
-            </h2>
+        <div className="mb-8">
+          {/* Top Navigation */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Palette className="h-8 w-8 text-blue-600" />
+              <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100">
+                Glaze Recipes
+              </h1>
+            </div>
             <div className="flex items-center gap-2">
               <UserProfile onSettingsClick={() => router.push('/settings')} />
               <Link href="/settings">
@@ -109,6 +118,17 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
+          </div>
+          
+          {/* Welcome Section */}
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
+              Welcome to {studioName}
+            </h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+              Capture, organize, and manage your ceramic glaze recipes digitally. 
+              Perfect for potters and ceramic artists.
+            </p>
           </div>
         </div>
 

@@ -14,9 +14,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Trash2, Camera, X } from 'lucide-react';
 import { GlazeRecipe, CreateGlazeData, Finish } from '@/types/glaze';
-import { saveGlazeRecipe, updateGlazeRecipe } from '@/lib/glaze-utils';
+import { saveGlazeRecipe, updateGlazeRecipe } from '@/lib/supabase-utils';
 import { getSettings, getAllBaseMaterialTypes, addClayBody } from '@/lib/settings-utils';
 import { parseGlazeIngredients, suggestIngredientName } from '@/lib/natural-language-parser';
+import { useAuth } from '@/contexts/AuthContext';
 
 const finishOptions: { value: Finish; label: string }[] = [
   { value: 'glossy', label: 'Glossy' },
@@ -69,6 +70,7 @@ interface CreateGlazeDialogProps {
 }
 
 export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, onGlazeUpdated, editingGlaze }: CreateGlazeDialogProps) {
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [studioMaterials, setStudioMaterials] = useState(getSettings().rawMaterials);
   const [clayBodies, setClayBodies] = useState(getSettings().clayBodies);
@@ -235,9 +237,13 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
 
 
   const onSubmit = async (data: FormData) => {
+    if (!user) {
+      console.error('User not authenticated');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-
       const glazeData: CreateGlazeData = {
         ...data,
         composition: data.composition.map(comp => ({
@@ -248,13 +254,13 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
 
       if (editingGlaze) {
         // Update existing glaze
-        const updatedGlaze = updateGlazeRecipe(editingGlaze.id, glazeData);
+        const updatedGlaze = await updateGlazeRecipe(editingGlaze.id, glazeData, user.id);
         if (updatedGlaze && onGlazeUpdated) {
           onGlazeUpdated(updatedGlaze);
         }
       } else {
         // Create new glaze
-        const newGlaze = saveGlazeRecipe(glazeData);
+        const newGlaze = await saveGlazeRecipe(glazeData, user.id);
         onGlazeCreated(newGlaze);
       }
       
