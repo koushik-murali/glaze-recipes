@@ -2,16 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Palette, Settings, User } from 'lucide-react';
+import { Plus, Palette } from 'lucide-react';
 import { GlazeRecipe } from '@/types/glaze';
 import { getGlazeRecipes, deleteGlazeRecipe } from '@/lib/supabase-utils';
 import { getSettings, isFirstLaunch } from '@/lib/settings-utils';
 import CreateGlazeDialog from '@/components/CreateGlazeDialog';
 import GlazeGallery from '@/components/GlazeGallery';
 import ViewGlazeDialog from '@/components/ViewGlazeDialog';
-import UserProfile from '@/components/UserProfile';
+import Sidebar from '@/components/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
@@ -24,6 +23,7 @@ export default function Home() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [studioName, setStudioName] = useState('My Studio');
   const [showFirstTimeBanner, setShowFirstTimeBanner] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -97,114 +97,98 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 safe-area-inset">
-      <div className="container mx-auto px-4 py-4 sm:py-8 mobile-scroll">
-        {/* Header */}
-        <div className="mb-8">
-          {/* Top Navigation */}
-          <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Left Sidebar */}
+      <Sidebar 
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+      />
+      
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Palette className="h-8 w-8 text-blue-600" />
-              <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100">
+              <h1 className="text-2xl font-bold text-slate-900">
                 Glaze Recipes
               </h1>
             </div>
-            <div className="flex items-center gap-2">
-              <UserProfile onSettingsClick={() => router.push('/settings')} />
-              <Link href="/settings">
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </Button>
-              </Link>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-medium text-slate-700">
+                Welcome to {studioName}
+              </h2>
+              <Button 
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="flex items-center gap-2"
+                size="lg"
+              >
+                <Plus className="h-5 w-5" />
+                Create New Glaze
+              </Button>
             </div>
-          </div>
-          
-          {/* Welcome Section */}
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-              Welcome to {studioName}
-            </h2>
-            <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Capture, organize, and manage your ceramic glaze recipes digitally. 
-              Perfect for potters and ceramic artists.
-            </p>
           </div>
         </div>
 
+        {/* Main Content */}
+        <div className="flex-1 overflow-y-auto p-6">
 
-        {/* First Time Banner */}
-        {showFirstTimeBanner && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <Settings className="h-5 w-5 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-sm font-medium text-blue-800">
-                  Welcome to Glaze Recipes!
-                </h3>
-                <p className="text-sm text-blue-700 mt-1">
-                  Set up your studio name and add clay bodies to get started with creating glaze recipes.
-                </p>
-                <div className="mt-3">
-                  <Link href="/settings">
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                      Go to Settings
+
+          {/* First Time Banner */}
+          {showFirstTimeBanner && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <Palette className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-blue-800">
+                    Welcome to Glaze Recipes!
+                  </h3>
+                  <p className="text-sm text-blue-700 mt-1">
+                    Use the left sidebar to manage your clay bodies and materials, then create your first glaze recipe.
+                  </p>
+                  <div className="mt-3">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setShowFirstTimeBanner(false)}
+                    >
+                      Dismiss
                     </Button>
-                  </Link>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setShowFirstTimeBanner(false)}
-                    className="ml-2"
-                  >
-                    Dismiss
-                  </Button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <Button 
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="flex items-center gap-2"
-            size="lg"
-          >
-            <Plus className="h-5 w-5" />
-            Create New Glaze
-          </Button>
+          {/* Glaze Gallery */}
+          <GlazeGallery 
+            glazes={glazes} 
+            onEditGlaze={handleEditGlaze}
+            onDeleteGlaze={handleDeleteGlaze}
+            onViewGlaze={handleViewGlaze}
+          />
         </div>
-
-        {/* Glaze Gallery */}
-        <GlazeGallery 
-          glazes={glazes} 
-          onEditGlaze={handleEditGlaze}
-          onDeleteGlaze={handleDeleteGlaze}
-          onViewGlaze={handleViewGlaze}
-        />
-
-        {/* Create/Edit Glaze Dialog */}
-        <CreateGlazeDialog
-          open={isCreateDialogOpen}
-          onOpenChange={handleDialogClose}
-          onGlazeCreated={handleGlazeCreated}
-          onGlazeUpdated={handleGlazeUpdated}
-          editingGlaze={editingGlaze}
-        />
-
-        {/* View Glaze Dialog */}
-        <ViewGlazeDialog
-          open={isViewDialogOpen}
-          onOpenChange={handleViewDialogClose}
-          glaze={viewingGlaze}
-          onEdit={handleEditFromView}
-        />
-
       </div>
+
+      {/* Create/Edit Glaze Dialog */}
+      <CreateGlazeDialog
+        open={isCreateDialogOpen}
+        onOpenChange={handleDialogClose}
+        onGlazeCreated={handleGlazeCreated}
+        onGlazeUpdated={handleGlazeUpdated}
+        editingGlaze={editingGlaze}
+      />
+
+      {/* View Glaze Dialog */}
+      <ViewGlazeDialog
+        open={isViewDialogOpen}
+        onOpenChange={handleViewDialogClose}
+        glaze={viewingGlaze}
+        onEdit={handleEditFromView}
+      />
     </div>
   );
 }

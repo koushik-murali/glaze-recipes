@@ -169,6 +169,16 @@ export async function addClayBody(clayBody: Omit<ClayBody, 'id' | 'createdAt' | 
   };
 }
 
+export async function deleteClayBody(id: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('clay_bodies')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId);
+
+  if (error) throw error;
+}
+
 // Raw Materials
 export async function getRawMaterials(userId: string): Promise<RawMaterial[]> {
   const { data, error } = await supabase
