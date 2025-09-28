@@ -242,6 +242,7 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
       return;
     }
 
+    console.log('Submitting glaze data:', data);
     setIsSubmitting(true);
     try {
       const glazeData: CreateGlazeData = {
@@ -252,22 +253,30 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
         })),
       };
 
+      console.log('Processed glaze data:', glazeData);
+
       if (editingGlaze) {
         // Update existing glaze
+        console.log('Updating existing glaze:', editingGlaze.id);
         const updatedGlaze = await updateGlazeRecipe(editingGlaze.id, glazeData, user.id);
+        console.log('Updated glaze result:', updatedGlaze);
         if (updatedGlaze && onGlazeUpdated) {
           onGlazeUpdated(updatedGlaze);
         }
       } else {
         // Create new glaze
+        console.log('Creating new glaze for user:', user.id);
         const newGlaze = await saveGlazeRecipe(glazeData, user.id);
+        console.log('Created glaze result:', newGlaze);
         onGlazeCreated(newGlaze);
       }
       
+      console.log('Form submission successful, closing dialog');
       form.reset();
       onOpenChange(false);
     } catch (error) {
       console.error('Error creating glaze:', error);
+      alert('Error creating glaze: ' + (error as Error).message);
     } finally {
       setIsSubmitting(false);
     }
@@ -289,7 +298,12 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={(e) => {
+            console.log('Form submit event triggered');
+            console.log('Form errors:', form.formState.errors);
+            console.log('Form is valid:', form.formState.isValid);
+            form.handleSubmit(onSubmit)(e);
+          }} className="space-y-6">
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
