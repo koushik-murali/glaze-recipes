@@ -1,160 +1,138 @@
-# Glaze Recipes - Digital Ceramic Glaze Management
+# 🎨 Glaze Recipes
 
-A modern, mobile-optimized web application for capturing, organizing, and managing ceramic glaze recipes digitally. Perfect for potters and ceramic artists who want to digitize their glaze recipe collection.
+A modern, digital glaze recipe management system for ceramic artists and potters. Built with Next.js, TypeScript, and Supabase.
 
-## Features
+## ✨ Features
 
-### ✨ Core Functionality
-- **Create Glaze Recipes**: Add new glaze recipes with comprehensive details
-- **Browse Gallery**: View all your glaze recipes in an organized gallery
-- **Search & Filter**: Find specific recipes by name, color, batch number, or finish type
-- **Mobile Optimized**: Fully responsive design optimized for mobile devices
+- **Natural Language Entry**: Type or speak glaze recipes in plain English
+- **Photo Management**: Upload and organize glaze photos
+- **Clay Body Tracking**: Manage different clay bodies and their properties
+- **Material Library**: Organize raw materials and their types
+- **Search & Filter**: Find recipes quickly by name, color, finish, or batch number
+- **User Authentication**: Secure, personal recipe storage
+- **Responsive Design**: Works perfectly on desktop and mobile
 
-### 🎨 Glaze Recipe Details
-Each glaze recipe includes:
-- **Name**: Descriptive name for the glaze
-- **Color**: Color description
-- **Finish**: Type of finish (glossy, matte, semi-matte, crystalline, raku, wood-fired, soda)
-- **Composition**: Dynamic list of components with percentages
-- **Date**: Creation date
-- **Batch Number**: Auto-generated unique identifier (format: GYYMMDD-XXXX)
-
-### 🔧 Technical Features
-- **Data Persistence**: All data stored locally in browser storage
-- **Form Validation**: Comprehensive validation with real-time feedback
-- **Percentage Validation**: Ensures composition percentages total 100%
-- **Modern UI**: Built with shadcn/ui components and Tailwind CSS
-- **TypeScript**: Fully typed for better development experience
-
-## Tech Stack
-
-- **Framework**: Next.js 15 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Forms**: React Hook Form with Zod validation
-- **Icons**: Lucide React
-- **Date Handling**: date-fns
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 18+ 
 - npm or yarn
+- Supabase account
 
-### Installation
+### 1. Clone the Repository
 
-1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/yourusername/glaze-recipes.git
 cd glaze-recipes
 ```
 
-2. Install dependencies:
+### 2. Install Dependencies
+
 ```bash
 npm install
 ```
 
-3. Run the development server:
+### 3. Set up Supabase
+
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Copy the project URL and anon key
+3. Create a `.env.local` file:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 4. Run Database Migrations
+
+1. Install Supabase CLI: `npm install -g supabase`
+2. Link your project: `supabase link --project-ref your-project-ref`
+3. Run migrations: `supabase db push`
+
+### 5. Start Development Server
+
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+Visit [http://localhost:3000](http://localhost:3000) to see the app.
 
-### Building for Production
+## 🗄️ Database Schema
 
-```bash
-npm run build
-npm start
-```
+The app uses PostgreSQL with the following main tables:
 
-## Usage
+- `glaze_recipes` - Store glaze recipes with composition and metadata
+- `clay_bodies` - Track clay body properties and shrinkage
+- `raw_materials` - Manage raw material library
+- All tables use Row Level Security (RLS) for user data isolation
 
-### Creating a Glaze Recipe
+## 🎯 Natural Language Entry
 
-1. Click the "Create New Glaze" button
-2. Fill in the basic information:
-   - Glaze name
-   - Color description
-   - Finish type
-   - Date
-   - Optional batch number (auto-generated if empty)
-
-3. Add composition components:
-   - Click "Add Component" to add new ingredients
-   - Enter component name (e.g., "China clay", "Feldspar")
-   - Enter percentage (must total 100%)
-   - Remove components with the trash icon
-
-4. Click "Create Glaze" to save
-
-### Browsing Recipes
-
-- **Search**: Use the search bar to find recipes by name, color, or batch number
-- **Filter**: Filter by finish type using the dropdown
-- **Sort**: Sort by date, name, or batch number
-- **View Details**: Each card shows composition breakdown and total percentage
-
-### Mobile Usage
-
-The app is fully optimized for mobile devices:
-- Touch-friendly interface
-- Responsive grid layout
-- Mobile-optimized forms
-- Safe area support for modern devices
-
-## Data Storage
-
-All glaze recipes are stored locally in your browser's localStorage. This means:
-- ✅ No account required
-- ✅ Data stays on your device
-- ✅ Works offline
-- ⚠️ Data is tied to the specific browser/device
-
-## Development
-
-### Project Structure
+Enter glaze recipes in plain English:
 
 ```
-src/
-├── app/                 # Next.js app directory
-│   ├── globals.css     # Global styles with mobile optimizations
-│   ├── layout.tsx      # Root layout
-│   └── page.tsx        # Home page
-├── components/         # React components
-│   ├── ui/            # shadcn/ui components
-│   ├── CreateGlazeDialog.tsx
-│   └── GlazeGallery.tsx
-├── lib/               # Utility functions
-│   ├── glaze-utils.ts # Data management functions
-│   └── utils.ts       # shadcn/ui utilities
-└── types/             # TypeScript type definitions
-    └── glaze.ts       # Glaze-related types
+10 china clay 20 potash feldspar 15 iron oxide
 ```
 
-### Key Components
+or
 
-- **CreateGlazeDialog**: Modal form for creating new glaze recipes
-- **GlazeGallery**: Displays all recipes with search/filter functionality
-- **glaze-utils.ts**: Handles data persistence and batch number generation
+```
+china clay 10 potash feldspar 20 iron oxide 15
+```
 
-## Contributing
+The parser intelligently handles:
+- Numeric values: `10`, `20`, `15`
+- Spoken numbers: `ten`, `twenty`, `fifteen`
+- Mixed formats and ingredient names
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+1. Push to GitHub
+2. Connect repository to Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy!
+
+### Other Platforms
+
+- **Netlify**: Works with `npm run build` and `npm run export`
+- **Railway**: Direct GitHub integration
+- **DigitalOcean App Platform**: Container-based deployment
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15, React 18, TypeScript
+- **Styling**: Tailwind CSS, shadcn/ui
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **File Storage**: Supabase Storage
+- **Deployment**: Vercel
+
+## 📱 Mobile Support
+
+The app is fully responsive and optimized for mobile devices with:
+- Touch-friendly interfaces
+- Mobile-optimized photo capture
+- Responsive grid layouts
+- Mobile-specific UI components
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-## License
+## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
+## 🙏 Acknowledgments
 
-For questions, issues, or feature requests, please open an issue on GitHub.
-
----
-
-Built with ❤️ for the ceramic arts community
+- Built with [Next.js](https://nextjs.org/)
+- UI components from [shadcn/ui](https://ui.shadcn.com/)
+- Database powered by [Supabase](https://supabase.com/)
+- Deployed on [Vercel](https://vercel.com/)
