@@ -14,8 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Trash2, Camera, X } from 'lucide-react';
 import { GlazeRecipe, CreateGlazeData, Finish } from '@/types/glaze';
-import { saveGlazeRecipe, updateGlazeRecipe } from '@/lib/supabase-utils';
-import { getSettings, getAllBaseMaterialTypes, addClayBody } from '@/lib/settings-utils';
+import { saveGlazeRecipe, updateGlazeRecipe, getClayBodies, addClayBody } from '@/lib/supabase-utils';
+import { getSettings, getAllBaseMaterialTypes } from '@/lib/settings-utils';
 import { parseGlazeIngredients, suggestIngredientName } from '@/lib/natural-language-parser';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -73,7 +73,7 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [studioMaterials, setStudioMaterials] = useState(getSettings().rawMaterials);
-  const [clayBodies, setClayBodies] = useState(getSettings().clayBodies);
+  const [clayBodies, setClayBodies] = useState<any[]>([]);
   const allBaseMaterials = getAllBaseMaterialTypes();
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [isAddingClayBody, setIsAddingClayBody] = useState(false);
@@ -173,23 +173,28 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
     form.setValue('photos', updatedPhotos);
   };
 
-  const handleAddClayBody = () => {
-    if (newClayBodyName.trim()) {
-      const newClayBody = addClayBody({
-        name: newClayBodyName.trim(),
-        shrinkage: newClayBodyShrinkage,
-        color: newClayBodyColor.trim() || 'Not specified',
-        notes: ''
-      });
-      
-      setClayBodies(prev => [...prev, newClayBody]);
-      form.setValue('clayBodyId', newClayBody.id);
-      
-      // Reset form
-      setNewClayBodyName('');
-      setNewClayBodyShrinkage(0);
-      setNewClayBodyColor('');
-      setIsAddingClayBody(false);
+  const handleAddClayBody = async () => {
+    if (newClayBodyName.trim() && user) {
+      try {
+        const newClayBody = await addClayBody({
+          name: newClayBodyName.trim(),
+          shrinkage: newClayBodyShrinkage,
+          color: newClayBodyColor.trim() || 'Not specified',
+          notes: ''
+        }, user.id);
+        
+        setClayBodies(prev => [...prev, newClayBody]);
+        form.setValue('clayBodyId', newClayBody.id);
+        
+        // Reset form
+        setNewClayBodyName('');
+        setNewClayBodyShrinkage(0);
+        setNewClayBodyColor('');
+        setIsAddingClayBody(false);
+      } catch (error) {
+        console.error('Error adding clay body:', error);
+        alert('Error adding clay body: ' + (error as Error).message);
+      }
     }
   };
 
@@ -228,12 +233,23 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
 
   // Update studio materials and clay bodies when dialog opens
   useEffect(() => {
-    if (open) {
-      const settings = getSettings();
-      setStudioMaterials(settings.rawMaterials);
-      setClayBodies(settings.clayBodies);
-    }
-  }, [open]);
+    const loadData = async () => {
+      if (open && user) {
+        try {
+          const settings = getSettings();
+          setStudioMaterials(settings.rawMaterials);
+          
+          // Load clay bodies from Supabase
+          const clayBodiesData = await getClayBodies(user.id);
+          setClayBodies(clayBodiesData);
+        } catch (error) {
+          console.error('Error loading clay bodies:', error);
+        }
+      }
+    };
+    
+    loadData();
+  }, [open, user]);
 
 
   const onSubmit = async (data: FormData) => {
