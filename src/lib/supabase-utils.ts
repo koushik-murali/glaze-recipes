@@ -143,7 +143,7 @@ export async function getClayBodies(userId: string): Promise<ClayBody[]> {
   }));
 }
 
-export async function addClayBody(clayBody: Omit<ClayBody, 'id'>, userId: string): Promise<ClayBody> {
+export async function addClayBody(clayBody: Omit<ClayBody, 'id' | 'createdAt' | 'updatedAt'>, userId: string): Promise<ClayBody> {
   const { data, error } = await supabase
     .from('clay_bodies')
     .insert({
