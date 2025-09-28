@@ -138,6 +138,8 @@ export async function getClayBodies(userId: string): Promise<ClayBody[]> {
     shrinkage: clayBody.shrinkage,
     color: clayBody.color,
     notes: clayBody.notes || '',
+    createdAt: new Date(clayBody.created_at),
+    updatedAt: new Date(clayBody.created_at),
   }));
 }
 
@@ -162,6 +164,8 @@ export async function addClayBody(clayBody: Omit<ClayBody, 'id'>, userId: string
     shrinkage: data.shrinkage,
     color: data.color,
     notes: data.notes || '',
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.created_at),
   };
 }
 
@@ -180,6 +184,8 @@ export async function getRawMaterials(userId: string): Promise<RawMaterial[]> {
     name: material.name,
     baseMaterialType: material.base_material_type,
     description: material.description || '',
+    createdAt: new Date(material.created_at),
+    updatedAt: new Date(material.created_at),
   }));
 }
 
@@ -202,6 +208,8 @@ export async function addRawMaterial(material: Omit<RawMaterial, 'id'>, userId: 
     name: data.name,
     baseMaterialType: data.base_material_type,
     description: data.description || '',
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.created_at),
   };
 }
 
