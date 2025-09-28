@@ -20,17 +20,14 @@ export default function Home() {
   const [viewingGlaze, setViewingGlaze] = useState<GlazeRecipe | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [studioName, setStudioName] = useState('My Studio');
+  const [showFirstTimeBanner, setShowFirstTimeBanner] = useState(false);
 
   useEffect(() => {
     setGlazes(getGlazeRecipes());
     const settings = getSettings();
-    setStudioName(settings.studioName);
-    
-    // Redirect to settings if it's the first launch
-    if (isFirstLaunch()) {
-      router.push('/settings');
-    }
-  }, [router]);
+    setStudioName(settings.studioName || 'My Studio');
+    setShowFirstTimeBanner(isFirstLaunch());
+  }, []);
 
   const handleGlazeCreated = (newGlaze: GlazeRecipe) => {
     setGlazes(prev => [...prev, newGlaze]);
@@ -109,6 +106,40 @@ export default function Home() {
           </div>
         </div>
 
+
+        {/* First Time Banner */}
+        {showFirstTimeBanner && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <Settings className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-blue-800">
+                  Welcome to Glaze Recipes!
+                </h3>
+                <p className="text-sm text-blue-700 mt-1">
+                  Set up your studio name and add clay bodies to get started with creating glaze recipes.
+                </p>
+                <div className="mt-3">
+                  <Link href="/settings">
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                      Go to Settings
+                    </Button>
+                  </Link>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowFirstTimeBanner(false)}
+                    className="ml-2"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
