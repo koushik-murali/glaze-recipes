@@ -44,12 +44,7 @@ export default function Home() {
   }, [user]);
 
   const handleGlazeCreated = (newGlaze: GlazeRecipe) => {
-    console.log('Glaze created callback called with:', newGlaze);
-    setGlazes(prev => {
-      const updated = [...prev, newGlaze];
-      console.log('Updated glazes array:', updated);
-      return updated;
-    });
+    setGlazes(prev => [...prev, newGlaze]);
   };
 
   const handleGlazeUpdated = (updatedGlaze: GlazeRecipe) => {
