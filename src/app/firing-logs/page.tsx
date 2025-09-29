@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { FiringLog, FiringWarning } from '@/types/firing';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { getFiringLogsCached, getKilnsCached } from '@/lib/cached-supabase-utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import GlobalNavigation from '@/components/GlobalNavigation';
@@ -102,26 +102,14 @@ export default function FiringLogsPage() {
     
     setLoading(true);
     try {
-      // Load firing logs
-      const { data: logsData, error: logsError } = await supabase
-        .from('firing_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
-
-      if (logsError) throw logsError;
+      // Load firing logs with caching
+      const logsData = await getFiringLogsCached(user.id);
       console.log('Loaded firing logs:', logsData);
-      setFiringLogs(logsData || []);
+      setFiringLogs(logsData);
 
-      // Load kilns
-      const { data: kilnsData, error: kilnsError } = await supabase
-        .from('kilns')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('name');
-
-      if (kilnsError) throw kilnsError;
-      setKilns(kilnsData || []);
+      // Load kilns with caching
+      const kilnsData = await getKilnsCached(user.id);
+      setKilns(kilnsData);
 
     } catch (error) {
       console.error('Error loading data:', error);

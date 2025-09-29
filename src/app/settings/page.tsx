@@ -15,11 +15,12 @@ import Link from 'next/link';
 import { StudioSettings } from '@/types/settings';
 import { getSettings, updateStudioName, addRawMaterial, updateRawMaterial, deleteRawMaterial, getAllBaseMaterialTypes, addClayBody, updateClayBody, deleteClayBody } from '@/lib/settings-utils';
 import { getGlazeRecipes } from '@/lib/glaze-utils';
-import { getGlazeRecipes as getGlazeRecipesFromSupabase } from '@/lib/supabase-utils';
+import { getGlazeRecipesCached, getClayBodiesCached, getRawMaterialsCached, addClayBodyCached, deleteClayBodyCached, addRawMaterialCached, deleteRawMaterialCached } from '@/lib/cached-supabase-utils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import GlobalNavigation from '@/components/GlobalNavigation';
+import CacheManagement from '@/components/CacheManagement';
 
 const studioNameSchema = z.object({
   studioName: z.string().min(1, 'Studio name is required'),
@@ -304,7 +305,7 @@ export default function SettingsPage() {
     if (!user) return;
     
     try {
-      const glazesData = await getGlazeRecipesFromSupabase(user.id);
+      const glazesData = await getGlazeRecipesCached(user.id);
       const csvData = glazesData.map(glaze => ({
         'Name': glaze.name,
         'Color': glaze.color,
@@ -392,7 +393,7 @@ export default function SettingsPage() {
     
     try {
       // Get all data
-      const glazesData = await getGlazeRecipesFromSupabase(user.id);
+      const glazesData = await getGlazeRecipesCached(user.id);
       const { data: firingLogs } = await supabase
         .from('firing_logs')
         .select('*')
@@ -1106,6 +1107,11 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Cache Management Section */}
+        <div className="mb-6">
+          <CacheManagement />
         </div>
       </div>
     </div>

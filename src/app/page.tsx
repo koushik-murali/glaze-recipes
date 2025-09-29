@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Palette, Menu, Mail, Settings, LogOut, Download, Zap } from 'lucide-react';
 import { GlazeRecipe } from '@/types/glaze';
-import { getGlazeRecipes, deleteGlazeRecipe } from '@/lib/supabase-utils';
+import { getGlazeRecipesCached, deleteGlazeRecipeCached } from '@/lib/cached-supabase-utils';
 import { getSettings, isFirstLaunch } from '@/lib/settings-utils';
 import CreateGlazeDialog from '@/components/CreateGlazeDialog';
 import GlazeGallery from '@/components/GlazeGallery';
@@ -35,7 +35,7 @@ export default function Home() {
     const loadData = async () => {
       if (user) {
         try {
-          const glazesData = await getGlazeRecipes(user.id);
+          const glazesData = await getGlazeRecipesCached(user.id);
           setGlazes(glazesData);
           setFilteredGlazes(glazesData); // Initialize filtered glazes
         } catch (error) {
@@ -74,7 +74,7 @@ export default function Home() {
   const handleDeleteGlaze = async (glazeId: string) => {
     if (confirm('Are you sure you want to delete this glaze recipe?') && user) {
       try {
-        await deleteGlazeRecipe(glazeId, user.id);
+        await deleteGlazeRecipeCached(glazeId, user.id);
         setGlazes(prev => prev.filter(glaze => glaze.id !== glazeId));
       } catch (error) {
         console.error('Error deleting glaze:', error);

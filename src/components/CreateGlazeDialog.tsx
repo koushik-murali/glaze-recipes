@@ -14,7 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Trash2, Camera, X } from 'lucide-react';
 import { GlazeRecipe, CreateGlazeData, Finish } from '@/types/glaze';
-import { saveGlazeRecipe, updateGlazeRecipe, getClayBodies, addClayBody } from '@/lib/supabase-utils';
+import { saveGlazeRecipeCached, updateGlazeRecipeCached, getClayBodiesCached, addClayBodyCached } from '@/lib/cached-supabase-utils';
 import { getSettings, getAllBaseMaterialTypes } from '@/lib/settings-utils';
 import { parseGlazeIngredients, suggestIngredientName } from '@/lib/natural-language-parser';
 import { useAuth } from '@/contexts/AuthContext';
@@ -207,7 +207,7 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
   const handleAddClayBody = async () => {
     if (newClayBodyName.trim() && user) {
       try {
-        const newClayBody = await addClayBody({
+        const newClayBody = await addClayBodyCached({
           name: newClayBodyName.trim(),
           shrinkage: newClayBodyShrinkage,
           color: newClayBodyColor.trim() || 'Not specified',
@@ -270,13 +270,13 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
           const settings = getSettings();
           setStudioMaterials(settings.rawMaterials);
           
-          // Load clay bodies from Supabase
-          const clayBodiesData = await getClayBodies(user.id);
+          // Load clay bodies from Supabase with caching
+          const clayBodiesData = await getClayBodiesCached(user.id);
           
           // If no clay bodies exist, create a default one
           if (clayBodiesData.length === 0) {
             console.log('No clay bodies found, creating default clay body');
-            const defaultClayBody = await addClayBody({
+            const defaultClayBody = await addClayBodyCached({
               name: 'Default Clay Body',
               shrinkage: 10,
               color: 'White',
@@ -325,13 +325,13 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
 
       if (editingGlaze) {
         // Update existing glaze
-        const updatedGlaze = await updateGlazeRecipe(editingGlaze.id, glazeData, user.id);
+        const updatedGlaze = await updateGlazeRecipeCached(editingGlaze.id, glazeData, user.id);
         if (updatedGlaze && onGlazeUpdated) {
           onGlazeUpdated(updatedGlaze);
         }
       } else {
         // Create new glaze
-        const newGlaze = await saveGlazeRecipe(glazeData, user.id);
+        const newGlaze = await saveGlazeRecipeCached(glazeData, user.id);
         onGlazeCreated(newGlaze);
       }
       
