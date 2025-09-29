@@ -630,81 +630,6 @@ export default function LiveFiringTracker({ userId, kilns, onSessionComplete }: 
     return validIntervals > 0 ? Math.round((totalRampRate / validIntervals) * 100) / 100 : 0;
   };
 
-  // Test function to verify Supabase connection and data saving
-  const testSupabaseConnection = async () => {
-    try {
-      console.log('Testing Supabase connection...');
-      
-      // Test basic connection
-      const { data: testData, error: testError } = await supabase
-        .from('firing_logs')
-        .select('id')
-        .limit(1);
-
-      if (testError) {
-        console.error('Supabase connection test failed:', testError);
-        return false;
-      }
-
-      console.log('Supabase connection test successful');
-      
-      // Check existing firing logs for this user
-      const { data: existingLogs, error: existingError } = await supabase
-        .from('firing_logs')
-        .select('id, title, kiln_name, created_at')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (existingError) {
-        console.error('Error fetching existing logs:', existingError);
-      } else {
-        console.log('Existing firing logs for user:', existingLogs);
-      }
-      
-      // Test insert with minimal data
-      const testFiringLog = {
-        user_id: userId,
-        kiln_name: 'Test Kiln',
-        title: 'Test Firing Log',
-        date: new Date().toISOString().split('T')[0],
-        notes: 'Test connection',
-        firing_type: 'bisque',
-        target_temperature: 999,
-        actual_temperature: 1000,
-        firing_duration_hours: 1.0,
-        ramp_rate: 100.0,
-        warning_flags: [],
-        temperature_entries: []
-      };
-
-      const { data: insertData, error: insertError } = await supabase
-        .from('firing_logs')
-        .insert(testFiringLog)
-        .select();
-
-      if (insertError) {
-        console.error('Supabase insert test failed:', insertError);
-        return false;
-      }
-
-      console.log('Supabase insert test successful:', insertData);
-      
-      // Clean up test data
-      if (insertData && insertData[0]) {
-        await supabase
-          .from('firing_logs')
-          .delete()
-          .eq('id', insertData[0].id);
-        console.log('Test data cleaned up');
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Supabase test error:', error);
-      return false;
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -797,25 +722,14 @@ export default function LiveFiringTracker({ userId, kilns, onSessionComplete }: 
             />
           </div>
 
-          <div className="space-y-2">
-            <Button 
-              onClick={startFiring} 
-              className="w-full h-[45px] text-lg"
-              disabled={!selectedKilnId || !currentTemp || parseInt(currentTemp) <= 0}
-            >
-              <Play className="h-5 w-5 mr-2" />
-              Start Firing Session
-            </Button>
-            
-            <Button 
-              onClick={testSupabaseConnection} 
-              variant="outline"
-              className="w-full h-[35px] text-sm"
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              Test Supabase Connection
-            </Button>
-          </div>
+          <Button 
+            onClick={startFiring} 
+            className="w-full h-[45px] text-lg"
+            disabled={!selectedKilnId || !currentTemp || parseInt(currentTemp) <= 0}
+          >
+            <Play className="h-5 w-5 mr-2" />
+            Start Firing Session
+          </Button>
         </div>
       ) : (
         // Active Session - Single Card
