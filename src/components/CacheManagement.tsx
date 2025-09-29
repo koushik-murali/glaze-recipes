@@ -185,7 +185,7 @@ export default function CacheManagement() {
             {/* Data Type Breakdown */}
             <div className="space-y-3">
               <h4 className="font-medium">Performance by Data Type</h4>
-              {Array.from(metrics.entries()).map(([dataType, metrics]) => {
+              {metrics && metrics instanceof Map && Array.from(metrics.entries()).map(([dataType, metrics]) => {
                 const hitRate = (metrics.hits / metrics.totalRequests) * 100;
                 return (
                   <div key={dataType} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">

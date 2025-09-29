@@ -201,8 +201,8 @@ export const cachePerformance = CachePerformanceMonitor.getInstance();
  */
 export function withPerformanceMonitoring<T>(
   dataType: string,
-  operation: () => Promise<{ data: T; fromCache: boolean }>
-): Promise<{ data: T; fromCache: boolean }> {
+  operation: () => Promise<{ data: T; fromCache: boolean; timestamp: number }>
+): Promise<{ data: T; fromCache: boolean; timestamp: number }> {
   const timingId = cachePerformance.startTiming(dataType);
   
   return operation().then(result => {

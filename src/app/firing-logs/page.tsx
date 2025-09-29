@@ -25,6 +25,7 @@ import {
 import { FiringLog, FiringWarning } from '@/types/firing';
 import { useAuth } from '@/contexts/AuthContext';
 import { getFiringLogsCached, getKilnsCached } from '@/lib/cached-supabase-utils';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import GlobalNavigation from '@/components/GlobalNavigation';
