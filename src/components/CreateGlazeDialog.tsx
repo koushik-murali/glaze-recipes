@@ -18,6 +18,9 @@ import { saveGlazeRecipe, updateGlazeRecipe, getClayBodies, addClayBody } from '
 import { getSettings, getAllBaseMaterialTypes } from '@/lib/settings-utils';
 import { parseGlazeIngredients, suggestIngredientName } from '@/lib/natural-language-parser';
 import { useAuth } from '@/contexts/AuthContext';
+import { compressImage, getFileSizeString } from '@/lib/image-compression';
+import { checkRecipeLimit } from '@/lib/subscription-utils';
+import { toast } from 'sonner';
 
 const finishOptions: { value: Finish; label: string }[] = [
   { value: 'glossy', label: 'Glossy' },
@@ -48,6 +51,7 @@ const formSchema = z.object({
   batchNumber: z.string().optional(),
   photos: z.array(z.string()).optional(),
   clayBodyId: z.string().min(1, 'Clay body is required'),
+  firingAtmosphere: z.enum(['oxidation', 'reduction']).optional(),
 });
 
 type FormData = {
@@ -59,6 +63,7 @@ type FormData = {
   batchNumber?: string;
   photos?: string[];
   clayBodyId: string;
+  firingAtmosphere?: 'oxidation' | 'reduction';
 };
 
 interface CreateGlazeDialogProps {
@@ -143,27 +148,53 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
     }
   };
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
-      const newPhotos: string[] = [];
-      let processedCount = 0;
-      
-      Array.from(files).forEach((file) => {
+    if (!files) return;
+
+    const newPhotos: string[] = [];
+    let processedCount = 0;
+    
+    for (const file of Array.from(files)) {
+      try {
+        // Compress the image
+        const compressionResult = await compressImage(file);
+        
+        if (!compressionResult.success) {
+          toast.error(compressionResult.error || 'Failed to compress image');
+          continue;
+        }
+
+        // Convert compressed file to base64
         const reader = new FileReader();
         reader.onload = (e) => {
           const result = e.target?.result as string;
-          newPhotos.push(result);
+          if (result) {
+            newPhotos.push(result);
+          }
           processedCount++;
           
           if (processedCount === files.length) {
             const updatedPhotos = [...photoPreviews, ...newPhotos];
             setPhotoPreviews(updatedPhotos);
             form.setValue('photos', updatedPhotos);
+            
+            if (compressionResult.originalSize && compressionResult.compressedSize) {
+              const originalSize = getFileSizeString(compressionResult.originalSize);
+              const compressedSize = getFileSizeString(compressionResult.compressedSize);
+              toast.success(`Image compressed: ${originalSize} → ${compressedSize}`);
+            }
           }
         };
-        reader.readAsDataURL(file);
-      });
+        
+        if (compressionResult.file) {
+          reader.readAsDataURL(compressionResult.file);
+        }
+      } catch (error) {
+        console.error('Error processing image:', error);
+        toast.error('Failed to process image');
+        processedCount++;
+      }
     }
   };
 
@@ -269,6 +300,17 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
     if (!user) {
       console.error('User not authenticated');
       return;
+    }
+
+    // Check subscription limits for new recipes
+    if (!editingGlaze) {
+      const limitCheck = await checkRecipeLimit(user.id);
+      if (!limitCheck.canCreate) {
+        toast.error(
+          `Recipe limit reached (${limitCheck.currentCount}/${limitCheck.limit}). Upgrade your plan to create more recipes.`
+        );
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -503,6 +545,42 @@ export default function CreateGlazeDialog({ open, onOpenChange, onGlazeCreated, 
                       </Card>
                     )}
                   </div>
+                </FormItem>
+              )}
+            />
+
+            {/* Firing Atmosphere */}
+            <FormField
+              control={form.control}
+              name="firingAtmosphere"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Firing Atmosphere (Optional)</FormLabel>
+                  <FormControl>
+                    <div className="flex gap-4">
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          value="oxidation"
+                          checked={field.value === 'oxidation'}
+                          onChange={() => field.onChange('oxidation')}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm font-medium">Oxidation</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          value="reduction"
+                          checked={field.value === 'reduction'}
+                          onChange={() => field.onChange('reduction')}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm font-medium">Reduction</span>
+                      </label>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />

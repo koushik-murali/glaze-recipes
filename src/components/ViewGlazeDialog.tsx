@@ -1,14 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Calendar, Hash, Palette } from 'lucide-react';
+import { Edit, Calendar, Hash, Palette, Share2, Copy, ExternalLink } from 'lucide-react';
 import { GlazeRecipe, Finish } from '@/types/glaze';
 import { getSettings } from '@/lib/settings-utils';
 import { format } from 'date-fns';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { generateUUID } from '@/lib/uuid-utils';
+import { copyToClipboard, shareContent, copyToClipboardEnhanced } from '@/lib/clipboard-utils';
 
 interface ViewGlazeDialogProps {
   open: boolean;
@@ -29,6 +34,9 @@ const finishOptions: { value: Finish; label: string }[] = [
 
 export default function ViewGlazeDialog({ open, onOpenChange, glaze, onEdit }: ViewGlazeDialogProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [shareLink, setShareLink] = useState<string>('');
+  const [isSharing, setIsSharing] = useState(false);
+  const { user } = useAuth();
   const settings = getSettings();
   
   if (!glaze) return null;
@@ -47,6 +55,63 @@ export default function ViewGlazeDialog({ open, onOpenChange, glaze, onEdit }: V
       soda: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     };
     return colors[finish] || colors.glossy;
+  };
+
+  const generateShareLink = async () => {
+    if (!glaze || !user) return;
+    
+    setIsSharing(true);
+    try {
+      // Generate a public share token
+      const shareToken = generateUUID();
+      
+      // Save the share token to the database
+      const { error } = await supabase
+        .from('glaze_recipes')
+        .update({ share_token: shareToken })
+        .eq('id', glaze.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Generate the public share link
+      const baseUrl = window.location.origin;
+      const publicLink = `${baseUrl}/glazes/shared/${shareToken}`;
+      setShareLink(publicLink);
+      
+      toast.success('Share link generated successfully!');
+    } catch (error) {
+      console.error('Error generating share link:', error);
+      toast.error('Failed to generate share link');
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  const copyShareLink = async () => {
+    if (shareLink) {
+      const success = await copyToClipboardEnhanced(shareLink);
+      if (success) {
+        toast.success('Share link copied to clipboard!');
+      } else {
+        toast.error('Failed to copy link. Please try again.');
+      }
+    }
+  };
+
+  const handleNativeShare = async () => {
+    if (!glaze || !shareLink) return;
+    
+    const success = await shareContent(
+      `Check out this glaze recipe: ${glaze.name}`,
+      `Glaze Recipe: ${glaze.name}\nColor: ${glaze.color}\nFinish: ${glaze.finish}`,
+      shareLink
+    );
+    
+    if (!success) {
+      // Fallback to copy if native share fails
+      await copyShareLink();
+    }
   };
 
 
@@ -190,6 +255,75 @@ export default function ViewGlazeDialog({ open, onOpenChange, glaze, onEdit }: V
             </Card>
           </div>
         </div>
+
+        {/* Footer with Actions */}
+        <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
+          <div className="flex flex-col sm:flex-row gap-3 flex-1">
+            {/* Sharing Section */}
+            <div className="space-y-2 flex-1">
+              <div className="text-sm font-medium text-gray-700">Share Glaze Recipe</div>
+              {!shareLink ? (
+                <Button 
+                  variant="outline"
+                  onClick={generateShareLink}
+                  disabled={isSharing}
+                  className="w-full sm:w-auto"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  {isSharing ? 'Generating...' : 'Generate Share Link'}
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2 flex-wrap">
+                    {/* Native Share Button (Mobile) */}
+                    {navigator.share && (
+                      <Button 
+                        variant="outline"
+                        onClick={handleNativeShare}
+                        className="flex-1 sm:flex-none bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      variant="outline"
+                      onClick={copyShareLink}
+                      className="flex-1 sm:flex-none"
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy Link
+                    </Button>
+                    
+                    <Button 
+                      variant="outline"
+                      onClick={() => window.open(shareLink, '_blank')}
+                      className="flex-1 sm:flex-none"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open
+                    </Button>
+                  </div>
+                  <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded break-all">
+                    {shareLink}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Edit Button */}
+            {onEdit && (
+              <Button 
+                onClick={() => onEdit(glaze)}
+                className="w-full sm:w-auto"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Glaze
+              </Button>
+            )}
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

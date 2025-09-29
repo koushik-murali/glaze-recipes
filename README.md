@@ -1,138 +1,183 @@
-# 🎨 Glaze Recipes
+# Supabase CLI
 
-A modern, digital glaze recipe management system for ceramic artists and potters. Built with Next.js, TypeScript, and Supabase.
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
-## ✨ Features
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-- **Natural Language Entry**: Type or speak glaze recipes in plain English
-- **Photo Management**: Upload and organize glaze photos
-- **Clay Body Tracking**: Manage different clay bodies and their properties
-- **Material Library**: Organize raw materials and their types
-- **Search & Filter**: Find recipes quickly by name, color, finish, or batch number
-- **User Authentication**: Secure, personal recipe storage
-- **Responsive Design**: Works perfectly on desktop and mobile
+This repository contains all the functionality for Supabase CLI.
 
-## 🚀 Quick Start
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-### Prerequisites
+## Getting started
 
-- Node.js 18+ 
-- npm or yarn
-- Supabase account
+### Install the CLI
 
-### 1. Clone the Repository
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
 ```bash
-git clone https://github.com/yourusername/glaze-recipes.git
-cd glaze-recipes
+npm i supabase --save-dev
 ```
 
-### 2. Install Dependencies
+To install the beta release channel:
 
 ```bash
-npm install
+npm i supabase@beta --save-dev
 ```
 
-### 3. Set up Supabase
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Copy the project URL and anon key
-3. Create a `.env.local` file:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
 ```
 
-### 4. Run Database Migrations
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
 
-1. Install Supabase CLI: `npm install -g supabase`
-2. Link your project: `supabase link --project-ref your-project-ref`
-3. Run migrations: `supabase db push`
+<details>
+  <summary><b>macOS</b></summary>
 
-### 5. Start Development Server
+  Available via [Homebrew](https://brew.sh). To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Windows</b></summary>
+
+  Available via [Scoop](https://scoop.sh). To install:
+
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
+
+  To upgrade:
+
+  ```powershell
+  scoop update supabase
+  ```
+</details>
+
+<details>
+  <summary><b>Linux</b></summary>
+
+  Available via [Homebrew](https://brew.sh) and Linux packages.
+
+  #### via Homebrew
+
+  To install:
+
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
 
 ```bash
-npm run dev
+supabase bootstrap
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) to see the app.
+Or using npx:
 
-## 🗄️ Database Schema
-
-The app uses PostgreSQL with the following main tables:
-
-- `glaze_recipes` - Store glaze recipes with composition and metadata
-- `clay_bodies` - Track clay body properties and shrinkage
-- `raw_materials` - Manage raw material library
-- All tables use Row Level Security (RLS) for user data isolation
-
-## 🎯 Natural Language Entry
-
-Enter glaze recipes in plain English:
-
-```
-10 china clay 20 potash feldspar 15 iron oxide
+```bash
+npx supabase bootstrap
 ```
 
-or
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
 
+## Docs
+
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
+
+```sh
+# Go >= 1.22
+go run . help
 ```
-china clay 10 potash feldspar 20 iron oxide 15
-```
-
-The parser intelligently handles:
-- Numeric values: `10`, `20`, `15`
-- Spoken numbers: `ten`, `twenty`, `fifteen`
-- Mixed formats and ingredient names
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. Push to GitHub
-2. Connect repository to Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy!
-
-### Other Platforms
-
-- **Netlify**: Works with `npm run build` and `npm run export`
-- **Railway**: Direct GitHub integration
-- **DigitalOcean App Platform**: Container-based deployment
-
-## 🛠️ Tech Stack
-
-- **Frontend**: Next.js 15, React 18, TypeScript
-- **Styling**: Tailwind CSS, shadcn/ui
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth
-- **File Storage**: Supabase Storage
-- **Deployment**: Vercel
-
-## 📱 Mobile Support
-
-The app is fully responsive and optimized for mobile devices with:
-- Touch-friendly interfaces
-- Mobile-optimized photo capture
-- Responsive grid layouts
-- Mobile-specific UI components
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with [Next.js](https://nextjs.org/)
-- UI components from [shadcn/ui](https://ui.shadcn.com/)
-- Database powered by [Supabase](https://supabase.com/)
-- Deployed on [Vercel](https://vercel.com/)

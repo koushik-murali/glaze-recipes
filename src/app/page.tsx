@@ -2,20 +2,23 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Palette } from 'lucide-react';
+import { Plus, Palette, Menu, Mail, Settings, LogOut, Download, Zap } from 'lucide-react';
 import { GlazeRecipe } from '@/types/glaze';
 import { getGlazeRecipes, deleteGlazeRecipe } from '@/lib/supabase-utils';
 import { getSettings, isFirstLaunch } from '@/lib/settings-utils';
 import CreateGlazeDialog from '@/components/CreateGlazeDialog';
 import GlazeGallery from '@/components/GlazeGallery';
 import ViewGlazeDialog from '@/components/ViewGlazeDialog';
-import Sidebar from '@/components/Sidebar';
+import SearchFilterPanel from '@/components/SearchFilterPanel';
+import ExportDialog from '@/components/ExportDialog';
+import ActiveFiringCard from '@/components/ActiveFiringCard';
+import GlobalNavigation from '@/components/GlobalNavigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [glazes, setGlazes] = useState<GlazeRecipe[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingGlaze, setEditingGlaze] = useState<GlazeRecipe | null>(null);
@@ -23,7 +26,10 @@ export default function Home() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [studioName, setStudioName] = useState('My Studio');
   const [showFirstTimeBanner, setShowFirstTimeBanner] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isFilterPanelCollapsed, setIsFilterPanelCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [filteredGlazes, setFilteredGlazes] = useState<GlazeRecipe[]>([]);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -31,6 +37,7 @@ export default function Home() {
         try {
           const glazesData = await getGlazeRecipes(user.id);
           setGlazes(glazesData);
+          setFilteredGlazes(glazesData); // Initialize filtered glazes
         } catch (error) {
           console.error('Error loading glazes:', error);
         }
@@ -42,6 +49,11 @@ export default function Home() {
     
     loadData();
   }, [user]);
+
+  // Update filtered glazes when glazes change
+  useEffect(() => {
+    setFilteredGlazes(glazes);
+  }, [glazes]);
 
   const handleGlazeCreated = (newGlaze: GlazeRecipe) => {
     setGlazes(prev => [...prev, newGlaze]);
@@ -97,79 +109,132 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Left Sidebar */}
-      <Sidebar 
-        isCollapsed={isSidebarCollapsed}
-        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-      />
-      
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Palette className="h-8 w-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-slate-900">
-                Glaze Recipes
-              </h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-medium text-slate-700">
-                Welcome to {studioName}
-              </h2>
-              <Button 
-                onClick={() => setIsCreateDialogOpen(true)}
-                className="flex items-center gap-2"
-                size="lg"
-              >
-                <Plus className="h-5 w-5" />
-                Create New Glaze
-              </Button>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Global Navigation */}
+      <GlobalNavigation studioName={studioName} />
+
+      {/* Page Content Header */}
+      <div className="bg-white border-b border-gray-200 px-4 lg:px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="lg:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            
+            <h1 className="text-xl lg:text-2xl font-bold text-slate-900">
+              Glaze Recipes
+            </h1>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {/* Email Help Link */}
+            <a
+              href="mailto:koushik@studiogenki.in"
+              className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              <Mail className="h-4 w-4" />
+              <span className="hidden sm:inline">Email for help</span>
+            </a>
+            
+            
+            <Button 
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="flex items-center gap-2"
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Create New Glaze</span>
+            </Button>
           </div>
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+      {/* Welcome Message */}
+      <div className="bg-blue-50 border-b border-blue-200 px-4 lg:px-6 py-3">
+        <h2 className="text-sm font-medium text-blue-800">
+          Welcome to {studioName}
+        </h2>
+      </div>
 
+      <div className="flex gap-6">
+        {/* Desktop Search & Filter Panel */}
+        <div className="hidden lg:block flex-shrink-0">
+          <SearchFilterPanel 
+            glazes={glazes}
+            onFilteredGlazes={setFilteredGlazes}
+            isCollapsed={isFilterPanelCollapsed}
+            onToggleCollapse={() => setIsFilterPanelCollapsed(!isFilterPanelCollapsed)}
+          />
+        </div>
 
-          {/* First Time Banner */}
-          {showFirstTimeBanner && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <Palette className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-medium text-blue-800">
-                    Welcome to Glaze Recipes!
-                  </h3>
-                  <p className="text-sm text-blue-700 mt-1">
-                    Use the left sidebar to manage your clay bodies and materials, then create your first glaze recipe.
-                  </p>
-                  <div className="mt-3">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => setShowFirstTimeBanner(false)}
-                    >
-                      Dismiss
-                    </Button>
+        {/* Mobile Search & Filter Overlay */}
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)} />
+            <div className="fixed left-0 top-0 h-full w-80 p-4">
+              <SearchFilterPanel 
+                glazes={glazes}
+                onFilteredGlazes={setFilteredGlazes}
+                isCollapsed={false}
+                onToggleCollapse={() => setIsMobileMenuOpen(false)}
+              />
+            </div>
+          </div>
+        )}
+        
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+
+          {/* Main Content */}
+          <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+
+            {/* First Time Banner */}
+            {showFirstTimeBanner && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <Palette className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-blue-800">
+                      Welcome to Glaze Recipes!
+                    </h3>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Use the sidebar to manage your clay bodies and materials, then create your first glaze recipe.
+                    </p>
+                    <div className="mt-3">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setShowFirstTimeBanner(false)}
+                      >
+                        Dismiss
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Glaze Gallery */}
-          <GlazeGallery 
-            glazes={glazes} 
-            onEditGlaze={handleEditGlaze}
-            onDeleteGlaze={handleDeleteGlaze}
-            onViewGlaze={handleViewGlaze}
-          />
+            {/* Active Firing Session Card */}
+            <div className="mb-6">
+              <ActiveFiringCard />
+            </div>
+
+            {/* Glaze Gallery */}
+            <GlazeGallery 
+              glazes={filteredGlazes} 
+              onEditGlaze={handleEditGlaze}
+              onDeleteGlaze={handleDeleteGlaze}
+              onViewGlaze={handleViewGlaze}
+            />
+          </div>
         </div>
       </div>
 
@@ -189,6 +254,15 @@ export default function Home() {
         glaze={viewingGlaze}
         onEdit={handleEditFromView}
       />
+
+      {/* Export Dialog */}
+      <ExportDialog
+        open={isExportDialogOpen}
+        onOpenChange={setIsExportDialogOpen}
+        glazeRecipes={glazes}
+        userId={user?.id || ''}
+      />
+
     </div>
   );
 }

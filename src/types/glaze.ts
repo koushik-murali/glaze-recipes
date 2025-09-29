@@ -23,6 +23,8 @@ export interface GlazeRecipe {
   batchNumber: string;
   photos?: string[]; // Array of Base64 encoded images
   clayBodyId: string; // Reference to clay body
+  firingAtmosphere?: 'oxidation' | 'reduction';
+  share_token?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,4 +38,5 @@ export interface CreateGlazeData {
   batchNumber?: string;
   photos?: string[];
   clayBodyId: string;
+  firingAtmosphere?: 'oxidation' | 'reduction';
 }
