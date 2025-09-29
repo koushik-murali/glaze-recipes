@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { LiveFiringSession } from '@/types/firing';
+import { getConeFromTemperature } from './firing-utils';
 
 export interface ActiveFiringSession {
   id: string;
@@ -31,14 +32,14 @@ export async function saveActiveSessionToSupabase(session: LiveFiringSession, us
       kiln_name: session.kilnName,
       firing_type: session.firingType,
       target_temperature: session.targetTemperature,
-      target_cone: session.targetCone,
+      target_cone: getConeFromTemperature(session.targetTemperature),
       start_time: session.startTime.toISOString(),
-      last_update: session.lastUpdate.toISOString(),
+      last_update: new Date().toISOString(),
       is_active: session.isActive,
       is_paused: !session.isActive,
       current_temperature: session.currentTemperature,
       notes: session.notes,
-      interval_minutes: session.intervalMinutes,
+      interval_minutes: 30, // Default interval
       temperature_entries: session.intervals.map(interval => ({
         id: interval.id,
         timestamp: interval.timestamp.toISOString(),
@@ -46,7 +47,7 @@ export async function saveActiveSessionToSupabase(session: LiveFiringSession, us
         notes: interval.notes,
         rampRate: interval.rampRate
       })),
-      warning_flags: session.warnings || []
+      warning_flags: [] // No warnings in LiveFiringSession
     };
 
     // Try to update existing session first
@@ -106,24 +107,21 @@ export async function loadActiveSessionFromSupabase(userId: string): Promise<Liv
     // Convert Supabase data back to LiveFiringSession format
     const session: LiveFiringSession = {
       id: data.id,
+      kilnId: data.kiln_id || '',
       kilnName: data.kiln_name,
       firingType: data.firing_type,
       targetTemperature: data.target_temperature,
-      targetCone: data.target_cone,
       startTime: new Date(data.start_time),
-      lastUpdate: new Date(data.last_update),
       isActive: data.is_active,
       currentTemperature: data.current_temperature,
       notes: data.notes,
-      intervalMinutes: data.interval_minutes,
       intervals: data.temperature_entries.map((entry: any) => ({
         id: entry.id,
         timestamp: new Date(entry.timestamp),
         temperature: entry.temperature,
         notes: entry.notes,
         rampRate: entry.rampRate
-      })),
-      warnings: data.warning_flags || []
+      }))
     };
 
     return session;

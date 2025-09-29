@@ -6,6 +6,29 @@ export interface TemperatureEntry {
   atmosphere?: 'oxidation' | 'reduction';
 }
 
+export interface FiringInterval {
+  id: string;
+  timestamp: Date;
+  temperature: number;
+  notes?: string;
+  atmosphere?: 'oxidation' | 'reduction';
+  rampRate?: number;
+}
+
+export interface LiveFiringSession {
+  id: string;
+  kilnId: string;
+  kilnName: string;
+  firingType: string;
+  title?: string;
+  startTime: Date;
+  isActive: boolean;
+  currentTemperature: number;
+  targetTemperature: number;
+  notes: string;
+  intervals: FiringInterval[];
+}
+
 export interface FiringLog {
   id: string;
   user_id: string;

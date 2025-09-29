@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { StudioSettings } from '@/types/settings';
 import { getSettings, updateStudioName, addRawMaterial, updateRawMaterial, deleteRawMaterial, getAllBaseMaterialTypes, addClayBody, updateClayBody, deleteClayBody } from '@/lib/settings-utils';
 import { getGlazeRecipes } from '@/lib/glaze-utils';
+import { getGlazeRecipes as getGlazeRecipesFromSupabase } from '@/lib/supabase-utils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -303,7 +304,7 @@ export default function SettingsPage() {
     if (!user) return;
     
     try {
-      const glazesData = await getGlazeRecipes(user.id);
+      const glazesData = await getGlazeRecipesFromSupabase(user.id);
       const csvData = glazesData.map(glaze => ({
         'Name': glaze.name,
         'Color': glaze.color,
@@ -311,7 +312,7 @@ export default function SettingsPage() {
         'Batch Number': glaze.batchNumber,
         'Date': glaze.date,
         'Firing Atmosphere': glaze.firingAtmosphere || '',
-        'Composition': glaze.composition.map(comp => `${comp.material}: ${comp.percentage}%`).join('; '),
+        'Composition': glaze.composition.map(comp => `${comp.name}: ${comp.percentage}%`).join('; '),
         'Clay Body': glaze.clayBodyId,
         'Photos': glaze.photos ? glaze.photos.length : 0,
         'Created': glaze.createdAt,
@@ -391,7 +392,7 @@ export default function SettingsPage() {
     
     try {
       // Get all data
-      const glazesData = await getGlazeRecipes(user.id);
+      const glazesData = await getGlazeRecipesFromSupabase(user.id);
       const { data: firingLogs } = await supabase
         .from('firing_logs')
         .select('*')

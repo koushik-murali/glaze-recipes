@@ -276,7 +276,7 @@ export default function ViewGlazeDialog({ open, onOpenChange, glaze, onEdit }: V
                 <div className="space-y-2">
                   <div className="flex gap-2 flex-wrap">
                     {/* Native Share Button (Mobile) */}
-                    {navigator.share && (
+                    {typeof navigator !== 'undefined' && 'share' in navigator && (
                       <Button 
                         variant="outline"
                         onClick={handleNativeShare}
